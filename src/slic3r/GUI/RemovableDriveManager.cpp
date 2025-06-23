@@ -35,7 +35,7 @@
 #include <pwd.h>
 #include <boost/filesystem.hpp>
 #include <boost/system/error_code.hpp>
-#include <boost/process.hpp>
+// #include <boost/process.hpp>  // Disabled for compatibility
 #endif
 
 namespace Slic3r {
@@ -859,37 +859,25 @@ void RemovableDriveManager::eject_drive()
 		// but neither triggers "succesful safe removal messege"
 		
 		BOOST_LOG_TRIVIAL(info) << "Ejecting started";
-		boost::process::ipstream istd_err;
-    	boost::process::child child(
+		
+		// Fallback to system() for compatibility with newer Boost versions
+		std::string command;
 #if __APPLE__		
-			boost::process::search_path("diskutil"), "eject", correct_path.c_str(), (boost::process::std_out & boost::process::std_err) > istd_err);
+		command = "diskutil eject '" + correct_path + "'";
 		//Another option how to eject at mac. Currently not working.
 		//used insted of system() command;
 		//this->eject_device(correct_path);
 #else
-    		boost::process::search_path("umount"), correct_path.c_str(), (boost::process::std_out & boost::process::std_err) > istd_err);
+		command = "umount '" + correct_path + "'";
 #endif
-		std::string line;
-		while (child.running() && std::getline(istd_err, line)) {
-			BOOST_LOG_TRIVIAL(trace) << line;
-		}
-		// wait for command to finnish (blocks ui thread)
-		std::error_code ec;
-		child.wait(ec);
+		
+		int err = std::system(command.c_str());
 		bool success = false;
-		if (ec) {
-            // The wait call can fail, as it did in https://github.com/prusa3d/PrusaSlicer/issues/5507
-            // It can happen even in cases where the eject is sucessful, but better report it as failed.
-            // We did not find a way to reliably retrieve the exit code of the process.
-			BOOST_LOG_TRIVIAL(error) << "boost::process::child::wait() failed during Ejection. State of Ejection is unknown. Error code: " << ec.value();
+		if (err == 0) {
+			BOOST_LOG_TRIVIAL(info) << "Ejecting finished";
+			success = true;
 		} else {
-			int err = child.exit_code();
-	    	if (err) {
-	    		BOOST_LOG_TRIVIAL(error) << "Ejecting failed. Exit code: " << err;
-	    	} else {
-				BOOST_LOG_TRIVIAL(info) << "Ejecting finished";
-				success = true;
-			}
+			BOOST_LOG_TRIVIAL(error) << "Ejecting failed. Exit code: " << err;
 		}
 		assert(m_callback_evt_handler);
 		if (m_callback_evt_handler) 

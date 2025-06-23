@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git submodule:*)",
+      "Bash(./BuildMacOS.sh:*)",
+      "Bash(brew search:*)",
+      "Bash(brew install:*)",
+      "Bash(cmake:*)",
+      "Bash(make:*)",
+      "Bash(hdiutil attach:*)",
+      "Bash(sudo cp:*)",
+      "Bash(hdiutil unmount:*)",
+      "Bash(rm:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(cp:*)",
+      "Bash(~/cmake-3.27.9.app/Contents/bin/cmake:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(timeout 30 make 2 >& 1)",
+      "Bash(brew list:*)",
+      "Bash(brew:*)",
+      "Bash(export:*)",
+      "Bash(./bin/superslicer:*)"
+    ],
+    "deny": []
+  }
+}

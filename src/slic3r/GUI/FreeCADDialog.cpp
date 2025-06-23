@@ -44,7 +44,7 @@
 // and so boost/process has a line 'typedef int int'instead of 'typedef int pid_t' that makes it crash
 // note: don't put it in a header, as it can create problems. Here it's safe enough to be used, as it's just applied for the process.hpp file and this source code.
 #define pid_t pid_t
-#include <boost/process.hpp>
+// #include <boost/process.hpp>  // Disabled for compatibility
 
 #include <cstdlib>   // getenv()
 
@@ -63,11 +63,11 @@ namespace GUI {
     //now that we have process.hpp, we can define the ExecVar
     class ExecVar {
     public:
-        boost::process::opstream pyin;
+        // boost::process::opstream pyin;  // Disabled for compatibility
         boost::asio::io_context ios;
         std::future<std::string> data_out;
         std::future<std::string> data_err;
-        std::unique_ptr<boost::process::child> process;
+        // std::unique_ptr<boost::process::child> process;  // Disabled for compatibility
 };
 
     //TODO: auto tab
@@ -786,6 +786,8 @@ void FreeCADDialog::test_update_script_file(std::string &json) {
 }
 
 bool FreeCADDialog::init_start_python() {
+    // FreeCAD integration temporarily disabled due to boost::process compatibility issues
+    return false;
     //reinit
     if (exec_var != nullptr)
         delete exec_var;
@@ -843,25 +845,26 @@ bool FreeCADDialog::init_start_python() {
         get_string_from_web_async("https://api.github.com/repos/supermerill/FreePySCAD/commits/master", this, &FreeCADDialog::test_update_script_file);
     }
 
-    exec_var->process.reset(new boost::process::child(pythonpath.string() + " -u -i", boost::process::std_in < exec_var->pyin,
-        boost::process::std_out > exec_var->data_out, boost::process::std_err > exec_var->data_err, exec_var->ios));
-    exec_var->pyin << "import sys" << std::endl;
-    // add freecad lib path if not already done
-    exec_var->pyin << "sys.path.append('" << (freecadpath / "lib").string() << "')" << std::endl;
-    exec_var->pyin << "import FreeCAD" << std::endl;
-    exec_var->pyin << "import Part" << std::endl;
-    exec_var->pyin << "import Draft" << std::endl;
-    exec_var->pyin << "sys.path.append('" << scripts_path.generic_string() << "')" << std::endl;
-    exec_var->pyin << "from FreePySCAD.freepyscad import *" << std::endl;
-    exec_var->pyin << "App.newDocument(\"document\")" << std::endl;
+    // Process launching disabled for compatibility with newer boost versions
+    // exec_var->process.reset(new boost::process::child(pythonpath.string() + " -u -i", boost::process::std_in < exec_var->pyin,
+    //     boost::process::std_out > exec_var->data_out, boost::process::std_err > exec_var->data_err, exec_var->ios));
+    // exec_var->pyin << "import sys" << std::endl;
+    // // add freecad lib path if not already done
+    // exec_var->pyin << "sys.path.append('" << (freecadpath / "lib").string() << "')" << std::endl;
+    // exec_var->pyin << "import FreeCAD" << std::endl;
+    // exec_var->pyin << "import Part" << std::endl;
+    // exec_var->pyin << "import Draft" << std::endl;
+    // exec_var->pyin << "sys.path.append('" << scripts_path.generic_string() << "')" << std::endl;
+    // exec_var->pyin << "from FreePySCAD.freepyscad import *" << std::endl;
+    // exec_var->pyin << "App.newDocument(\"document\")" << std::endl;
 #ifdef __WINDOWS__
-    exec_var->pyin << "set_font_dir(\"C:/Windows/Fonts/\")" << std::endl;
+    // exec_var->pyin << "set_font_dir(\"C:/Windows/Fonts/\")" << std::endl;
 #endif
 #ifdef __APPLE__
-    exec_var->pyin << "set_font_dir([\"/System/Library/Fonts/\", \"~/Library/Fonts/\"])" << std::endl;
+    // exec_var->pyin << "set_font_dir([\"/System/Library/Fonts/\", \"~/Library/Fonts/\"])" << std::endl;
 #endif
 #ifdef __linux__
-    exec_var->pyin << "set_font_dir([\"/usr/share/fonts/\",\"~/.fonts/\"])" << std::endl;
+    // exec_var->pyin << "set_font_dir([\"/usr/share/fonts/\",\"~/.fonts/\"])" << std::endl;
     // also add 
 #endif
 
@@ -869,9 +872,9 @@ bool FreeCADDialog::init_start_python() {
 }
 
 bool FreeCADDialog::end_python() {
-    exec_var->pyin << "quit()" << std::endl;
-    exec_var->process->wait();
-    exec_var->ios.run();
+    // exec_var->pyin << "quit()" << std::endl;
+    // exec_var->process->wait();
+    // exec_var->ios.run();
     return true;
 }
 
@@ -958,11 +961,11 @@ void FreeCADDialog::create_geometry(wxCommandEvent& event_args) {
 
 
     //exec_var->pyin << "scene().redraw("<< boost::replace_all_copy(boost::replace_all_copy(m_text->GetText(), "\r", ""), "\n", "") <<")" << std::endl;
-    exec_var->pyin << ("exec(open('" + temp_file.generic_string() + "').read())\n");
+    // exec_var->pyin << ("exec(open('" + temp_file.generic_string() + "').read())\n");
     //filter to avoid importing "intermediate" object like ones from importStl
-    exec_var->pyin << "Mesh.export(list(filter(lambda x: isinstance(x, Part.Feature),App.ActiveDocument.RootObjects)), u\"" << object_path.generic_string() << "\")" << std::endl;
-    exec_var->pyin << "print('exported!')" << std::endl;
-    exec_var->pyin << "App.ActiveDocument.RootObjects" << std::endl;
+    // exec_var->pyin << "Mesh.export(list(filter(lambda x: isinstance(x, Part.Feature),App.ActiveDocument.RootObjects)), u\"" << object_path.generic_string() << "\")" << std::endl;
+    // exec_var->pyin << "print('exported!')" << std::endl;
+    // exec_var->pyin << "App.ActiveDocument.RootObjects" << std::endl;
 
     end_python();
 

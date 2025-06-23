@@ -89,7 +89,7 @@
 #else
 	// POSIX
 #include <sstream>
-#include <boost/process.hpp>
+// #include <boost/process.hpp>  // Disabled for compatibility
 #include <unistd.h>     //readlink
 #endif
 

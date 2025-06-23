@@ -22,8 +22,8 @@
 // For starting another PrusaSlicer instance on OSX.
 // Fails to compile on Windows on the build server.
 #ifdef __APPLE__
-    #include <boost/process/spawn.hpp>
-    #include <boost/process/args.hpp>
+    // #include <boost/process/spawn.hpp>  // Disabled for compatibility
+    // #include <boost/process/args.hpp>   // Disabled for compatibility
 #endif
 
 #include <wx/stdpaths.h>
@@ -91,29 +91,28 @@ static void start_new_slicer_or_gcodeviewer(const NewSlicerInstanceType instance
 		// ((instance_type == NewSlicerInstanceType::Slicer) ? SLIC3R_APP_CMD : GCODEVIEWER_APP_CMD);
 		// Just run the slicer and give it a --gcodeviewer parameter.
 		bin_path = bin_path.parent_path() / SLIC3R_APP_CMD;
-		// On Apple the wxExecute fails, thus we use boost::process instead.
+		// On Apple, fallback to system() for compatibility with newer Boost versions
 		BOOST_LOG_TRIVIAL(info) << "Trying to spawn a new slicer \"" << bin_path.string() << "\"";
 		try {
-			std::vector<std::string> args;
+			std::string command = "\"" + bin_path.string() + "\"";
 			if (instance_type == NewSlicerInstanceType::GCodeViewer)
-				args.emplace_back("--gcodeviewer");
+				command += " --gcodeviewer";
 			if (!paths_to_open.empty()) {
-				for (const auto& file : paths_to_open)
-					args.emplace_back(into_u8(file));
+				for (const auto& file : paths_to_open) {
+					command += " \"" + into_u8(file) + "\"";
+				}
 			}
 			if (instance_type == NewSlicerInstanceType::Slicer && single_instance)
-				args.emplace_back("--single-instance");
+				command += " --single-instance";
 			if (delete_after_load && !paths_to_open.empty())
-				args.emplace_back("--delete-after-load=1");
-			args.push_back("--datadir");
-			args.push_back((Slic3r::data_dir()));
-			boost::process::spawn(bin_path, args);
-		    // boost::process::spawn() sets SIGCHLD to SIGIGN for the child process, thus if a child PrusaSlicer spawns another
-		    // subprocess and the subrocess dies, the child PrusaSlicer will not receive information on end of subprocess
-		    // (posix waitpid() call will always fail).
-		    // https://jmmv.dev/2008/10/boostprocess-and-sigchld.html
-		    // The child instance of PrusaSlicer has to reset SIGCHLD to its default, so that posix waitpid() and similar continue to work.
-		    // See GH issue #5507
+				command += " --delete-after-load=1";
+			command += " --datadir \"" + Slic3r::data_dir() + "\"";
+			command += " &"; // Run in background
+			
+			int result = std::system(command.c_str());
+			if (result != 0) {
+				BOOST_LOG_TRIVIAL(error) << "Failed to spawn a new slicer \"" << bin_path.string() << "\": exit code " << result;
+			}
 		}
 		catch (const std::exception& ex) {
 			BOOST_LOG_TRIVIAL(error) << "Failed to spawn a new slicer \"" << bin_path.string() << "\": " << ex.what();
