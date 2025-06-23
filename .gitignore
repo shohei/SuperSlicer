@@ -25,3 +25,4 @@ CMakeUserPresets.json
 # MacOS Ignores
 .DS_Store
 
+cmake-3.27.9-macos-universal.dmg
